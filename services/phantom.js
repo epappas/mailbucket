@@ -1,12 +1,10 @@
+/* global phantom */
 var newPage = require('webpage').create;
 var server = require('webserver').create();
 var system = require('system');
-//var stdin = require('system').stdin;
-var port = parseInt(system.args[1]);
+var port = parseInt(system.args[1], 10);
 var assetsPath = system.args[2];
 var start = Date.now();
-//var line;
-//var interval;
 
 
 if (system.args.length < 3) {
@@ -16,34 +14,6 @@ if (system.args.length < 3) {
 
 phantom.outputEncoding = "utf8";
 
-//mainLoop(1);
-//function mainLoop(duration) {
-//  interval = setTimeout(function() {
-//      console.log("About to read");
-//      while(line = system.stdin.readLine()) {
-//          console.log("I read", line);
-//          var command = JSON.parse(line);
-//          console.log(command.token);
-//          console.log(command.address);
-//          console.log(command.cmd);
-//          doRender(command.address, command.token);
-////            switch(command.cmd) {
-////                case "render":
-////                    // respect SingleThread
-////                    setTimeout(function() {
-////                        console.log("HERE");
-////                    }, 0);
-////                    break;
-////                case "quit":
-////                    doQuit(/*response*/);
-////                    break;
-////                default:
-////                    break;
-////            }
-//          mainLoop(1000);
-//      }
-//  }, duration);
-//}
 server.listen(port, function (request, response) {
     response.statusCode = 200;
     response.headers = {
@@ -51,9 +21,6 @@ server.listen(port, function (request, response) {
         'Content-Type': 'application/json'
     };
 
-    // TODO investigate further and fix
-    //console.log("{\"token\":\"123456789\", \"path\":\"default.png\"}");
-    //console.log(JSON.parse(request.headers.content, null, 4));
     var command = JSON.parse(request.headers.content, null, 4);
 
     switch(command.cmd) {
