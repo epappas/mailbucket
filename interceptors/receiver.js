@@ -1,18 +1,18 @@
 var System = require("../lib/system");
 var pledge = require("../lib/pledge");
+var mediator = require("../lib/mediator");
 var crypto = require('crypto');
-var events = require('events');
 
-var flow = new events.EventEmitter();
+var receiver = module.exports = mediator.extent("receiver");
 
 if (typeof setImmediate === "undefined") {
     require('setimmediate');
 }
 
-exports.incoming = function(message, callback) {
+receiver.incoming = exports.incoming = function(message, callback) {
     var tokenKey = System.getUuid();
-    var headers = message.headers;
-    var envelope = message.envelope;
+    var headers = message.headers || { };
+    var envelope = message.envelope || { };
     // map alias mail addr
     System.redis.hget("mail_alias", envelope.to, function (err, result) {
         if (err || result === null) {
@@ -27,7 +27,7 @@ exports.incoming = function(message, callback) {
             if (result === 1) {
                 callback(null, {token: tokenKey});
 
-                flow.emit('message', {
+                receiver.publish('message', {
                     token     : tokenKey,
                     uKey      : uKey,
                     subject   : headers.Subject,
@@ -48,21 +48,24 @@ exports.incoming = function(message, callback) {
     });
 };
 
+receiver.subscribe("incoming", function(message, callback) {
+    receiver.incoming(message, callback);
+});
 
-flow.on('message', function (message) {
+receiver.subscribe('message', function (message) {
     pledge(message)
-        // push message to user list userKey_in
-        .then(function (message, next) {
-            System.redis.rpush(message.uKey + "_in", JSON.stringify(message), function (err) {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                next(message.uKey);
-            });
-        })
-        // publish new notification
-        .then(function (uKey) {
-            System.redis.publish("newMessage", uKey);
+    // push message to user list userKey_in
+    .then(function (message, next) {
+        System.redis.rpush(message.uKey + "_in", JSON.stringify(message), function (err) {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            next(message.uKey);
         });
+    })
+    // publish new notification
+    .then(function (uKey) {
+        System.redis.publish("newMessage", uKey);
+    });
 });

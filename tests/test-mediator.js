@@ -34,25 +34,25 @@ C.onRequest('name', function(request, callback) {
 });
 
 // ------------
-A.subscribe("newVal", function(val) {
-    console.log('Module: ' + this.name + ' Published ' + val);
+A.subscribe("newVal", function(val, val2) {
+    console.log('Module: ' + this.name + ' Published ' + val, val2);
 });
-B.subscribe("newVal", function(val) {
-    console.log('Module: ' + this.name + ' Published ' + val);
+B.subscribe("newVal", function(val, val2) {
+    console.log('Module: ' + this.name + ' Published ' + val, val2);
 });
-C.subscribe("newVal", function(val) {
-    console.log('Module: ' + this.name + ' Published ' + val);
+C.subscribe("newVal", function(val, val2) {
+    console.log('Module: ' + this.name + ' Published ' + val, val2);
 });
 
 // ------------
-mediator.subscribe('A:newVal', function(val) {
-     console.log('Out of nowhere I receved ' + val + ' From A');
+mediator.subscribe('A:newVal', function(val, val2) {
+     console.log('Out of nowhere I receved ' + val + ' From A', val2);
 });
-mediator.subscribe('B:newVal', function(val) {
-     console.log('Out of nowhere I receved ' + val + ' From B');
+mediator.subscribe('B:newVal', function(val, val2) {
+     console.log('Out of nowhere I receved ' + val + ' From B', val2);
 });
-mediator.subscribe('C:newVal', function(val) {
-     console.log('Out of nowhere I receved ' + val + ' From C');
+mediator.subscribe('C:newVal', function(val, val2) {
+     console.log('Out of nowhere I receved ' + val + ' From C', val2);
 });
 
 // ------------
@@ -67,6 +67,6 @@ C.request('name', Date.now(), function(err, val) {
 });
 
 // ------------
-A.publish('newVal', Date.now() + ' MyName: ' + A.myName());
-B.publish('newVal', Date.now() + ' MyName: ' + B.myName());
-C.publish('newVal', Date.now() + ' MyName: ' + C.myName());
+A.publish('newVal', Date.now() + ' MyName: ' + A.myName(), 123);
+B.publish('newVal', Date.now() + ' MyName: ' + B.myName(), 123);
+C.publish('newVal', Date.now() + ' MyName: ' + C.myName(), 123);
