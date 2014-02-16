@@ -14,7 +14,8 @@ if (typeof setImmediate === "undefined") {
 }
 
 // globalize
-System.redis = redis;
+System.nodeRedis = redis;
+System.redis = redis.createClient();
 
 app.configure(function () {
 
