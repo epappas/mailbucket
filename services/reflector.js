@@ -10,17 +10,17 @@ var reflector = require('../interceptors/reflector');
 
 module.exports = service;
 
-service.on('request:reflect', function (deferred, token) {
+service.on("request:reflect", function (deferred, token) {
     System.redis.rpush("reflections_queue", token);
     deferred.resolve(Date.now());
 });
 
 
 function mainLoop(service) {
-    System.redis.lpop('reflections_queue', function (err, token) {
+    System.redis.lpop("reflections_queue", function (err, token) {
         if (err) return console.log(err);
 
-        if (token) reflector.emit('reflect', token);
+        if (token) reflector.publish("reflect", token);
 
         service.immediate(INTENSE);
     });

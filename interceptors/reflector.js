@@ -2,7 +2,7 @@
  * Copyright (c) 2013. Developer Evangelos Pappas
  */
 var System = require("./lib/system");
-var events = require('events');
+var mediator = require("../lib/mediator");
 var phantom = require('phantomjs');
 var spawn = require('../commons/modSpawn.js');
 var path = require("path");
@@ -11,11 +11,9 @@ var model = require("../modules/reflections");
 var thumbSizes = System.conf.thumbSizes;
 var assetsPath = System.conf.assets.path;
 
-var flow = new events.EventEmitter();
+var reflector = module.exports = mediator.extent("reflector");
 
-module.exports = flow;
-
-flow.on("reflect", function (token) {
+reflector.subscribe("reflect", function (token) {
     __doRender(phantom.path, [
         // legacy options, don't ask me
         "--ignore-ssl-errors=true",
@@ -30,18 +28,6 @@ flow.on("reflect", function (token) {
         path.join(__dirname, assetsPath + "/mailthumbs/")
     ]);
 });
-
-
-function __spawnImageMagic(opts) {
-    System.imagemagick.resize({
-        srcPath: opts.src,
-        dstPath: opts.dest,
-        width  : opts.width,
-        height : opts.height
-    }, function (err) {
-        if (err) console.error(err.stack || err);
-    });
-}
 
 
 function __doRender(cmd, args) {
@@ -69,5 +55,17 @@ function __doRender(cmd, args) {
     }).on("error",function (thisChild) {
         // kill it so it'll enter in the reSpawn pipe
         thisChild.exit();
+    });
+}
+
+
+function __spawnImageMagic(opts) {
+    System.imagemagick.resize({
+        srcPath: opts.src,
+        dstPath: opts.dest,
+        width  : opts.width,
+        height : opts.height
+    }, function (err) {
+        if (err) console.error(err.stack || err);
     });
 }

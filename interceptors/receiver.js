@@ -5,10 +5,6 @@ var crypto = require('crypto');
 
 var receiver = module.exports = mediator.extent("receiver");
 
-if (typeof setImmediate === "undefined") {
-    require('setimmediate');
-}
-
 receiver.incoming = exports.incoming = function(message, callback) {
     var tokenKey = System.getUuid();
     var headers = message.headers || { };
