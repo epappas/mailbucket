@@ -9,6 +9,7 @@ var Memcached = require('memcached');
 var System = require("./lib/system").init('web');
 
 var user = require("./interceptors/user");
+var token = require("./interceptors/token");
 
 if (typeof setImmediate === "undefined") {
 	require('setimmediate');
@@ -28,7 +29,8 @@ var mkeyCache = ncache.memcached({
 System.memoryCache = memoryCache;
 System.mkeyCache = mkeyCache;
 System.memcached = memcached;
-System.redis = redis;
+System.nodeRedis = redis;
+System.redis = redis.createClient();
 System.auth = user.auth(express);
 
 process.on("uncaughtException", function (err) {
@@ -49,7 +51,13 @@ app.configure(function() {
 	app.use(express.cookieParser());
 	app.use(express.session({
 		secret: 'secret',
-		store: new RedisStore()
+		store: new RedisStore(),
+		key: 'mailbucket.sid',
+		cookie: {
+			path: '/',
+			domain: '.mailbucket.com',
+			maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+		}
 	}));
 
 	app.disable('x-powered-by');
@@ -62,7 +70,7 @@ app.configure(function() {
 	app.use(express.directory(__dirname + '/public'));
 	app.use(express.static(__dirname + '/public'));
 
-	app.use(user.untokenizeReq); // token-session decode pattern
+	app.use(token.untokenize); // token-session decode pattern
 	app.use(app.router);
 	app.use(function(req, res) {
 		res.writeHead(404, {
@@ -78,7 +86,7 @@ app.configure(function() {
 
 // SOLVES THE CORS PROBLEM
 app.all('/*', function(req, res, next) {
-	res.header("Access-Control-Allow-Origin", "localhost");
+	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", 'Content-Type, X-Requested-With');
 	res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 	res.header('Access-Control-Allow-Credentials', 'true');

@@ -1,20 +1,24 @@
-var System = require("../../lib/system");
 var userDAO = require("./dao");
 
-if (typeof setImmediate === "undefined") {
-    require('setimmediate');
-}
+module.exports = (function() {
 
-module.exports = (function(redis, memcached) {
-
-    var user = userDAO(redis, memcached);
+    var user = userDAO();
 
     return {
         list: function(req, res, callback) {
             return user.list(req)
-                .then(function(users) {
-                    setImmediate(callback.bind(null, users));
-                });
+            .then(function(users) {
+                setImmediate(callback, null, users);
+            });
+        },
+        getCompare: function(mail, pass, callback) {
+            return user.getCompare({mail: mail, pass: pass})
+            .then(function(user) {
+                setImmediate(callback, null, user);
+            })
+            .onError(function(err) {
+                setImmediate(callback, err, null);
+            });
         }
     };
-});
+})();

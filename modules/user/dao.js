@@ -1,16 +1,21 @@
-var Q = require("q");
 var System = require("../../lib/system.js");
 var pledge = require("../../lib/pledge.js");
+var crypto = require('crypto');
+var sha1 = crypto.createHash('sha1');
 
-if (typeof setImmediate === "undefined") {
-    require('setimmediate');
-}
+module.exports = (function() {
 
-module.exports = (function(redis, memcached) {
+    var redis = System.redis;
+
+    function __encrypt(pass, seed) {
+        for(var i=0; i<24; ++i) pass = sha1.update(seed + pass + seed).digest('hex');
+
+        return pass;
+    }
 
     return {
         list: function(args) {
-            var __this = this;
+
             return pledge(function(deferred) {
                 redis.hmget("usersDB", args.keys || [], function(err, json) {
                     var tmp = JSON.parse(json);
@@ -23,7 +28,7 @@ module.exports = (function(redis, memcached) {
             });
         },
         delete: function(args) {
-            var __this = this;
+
             return pledge(function(deferred) {
                 redis.hget("usersDB", args.key, function(err, json) {
                     var tmp = JSON.parse(json);
@@ -41,8 +46,28 @@ module.exports = (function(redis, memcached) {
                 });
             });
         },
+        getCompare: function(args) {
+            var key = sha1.update(args.mail).digest('hex');
+
+            return pledge(function(deferred) {
+                redis.hget("usersDB", key, function(err, json) {
+                    var tmp = JSON.parse(json);
+
+                    if (err || !json) return deferred.reject(err || "Not found " + args.mail);
+                    if (!tmp.seed || !args.pass) return deferred.reject(err || "Not found " + args.mail);
+                    if (tmp.pass !== __encrypt(args.pass, tmp.seed)) return deferred.reject(err || "Not found " + args.mail);
+
+                    deferred.resolve({
+                        key: tmp.key,
+                        avatar: tmp.avatar,
+                        uname: tmp.uname,
+                        mail: tmp.mail
+                    });
+                });
+            });
+        },
         get: function(args) {
-            var __this = this;
+
             return pledge(function(deferred) {
                 redis.hget("usersDB", args.key, function(err, json) {
                     var tmp = JSON.parse(json);
@@ -60,11 +85,11 @@ module.exports = (function(redis, memcached) {
             });
         },
         put: function(args) {
-            var __this = this;
-            var seed = Math.round(Math.random()*100000).toString(24);
+
+            var seed = Math.round(Math.random() * 100000).toString(24);
             var item = {
-                key: md5.update(args.mail).digest('hex'),
-                pass: md5.update(seed + args.pass + seed).digest('hex'),
+                key: sha1.update(args.mail).digest('hex'),
+                pass: __encrypt(args.pass, seed),
                 mail: args.mail,
                 uname: args.mail,
                 seed: seed,
